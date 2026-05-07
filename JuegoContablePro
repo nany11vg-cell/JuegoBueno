@@ -1,0 +1,196 @@
+import javax.swing.*;
+import javax.swing.border.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class SimuladorContablePro extends JFrame {
+
+    // Colores Estilo "Light Mode"
+    private final Color COLOR_FONDO = new Color(250, 252, 255);
+    private final Color COLOR_ACCENTO = new Color(16, 185, 129); // Verde Esmeralda
+    private final Color COLOR_TEXTO = new Color(30, 41, 59);
+    private final Color COLOR_ERROR = new Color(239, 68, 68);
+
+    private int pasoActual = 0;
+    private List<Concepto> conceptos;
+    private JLabel lblInstruccion, lblReporte, lblPaso;
+    private JTextArea txtInfo;
+    private JPanel panelOpciones;
+
+    // Clase para los conceptos contables
+    static class Concepto {
+        String nombre;
+        String tipo; // BG o ER
+        String categoria;
+        String explicacion;
+
+        public Concepto(String n, String t, String c, String e) {
+            this.nombre = n; this.tipo = t; this.categoria = c; this.explicacion = e;
+        }
+    }
+
+    public SimuladorContablePro() {
+        configurarVentana();
+        inicializarConceptos();
+        construirInterfaz();
+        actualizarPaso();
+    }
+
+    private void configurarVentana() {
+        setTitle("El Maestro Financiero: Simulador Didáctico");
+        setSize(1000, 700);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        getContentPane().setBackground(COLOR_FONDO);
+        setLayout(new BorderLayout(20, 20));
+    }
+
+    private void inicializarConceptos() {
+        conceptos = new ArrayList<>();
+        // ORDEN DIDÁCTICO PARA ESTADO DE RESULTADOS
+        conceptos.add(new Concepto("Ventas Netas", "ER", "Ingreso", "Es el punto de partida. Representa el ingreso real por la actividad del negocio."));
+        conceptos.add(new Concepto("Costo de Ventas", "ER", "Costo", "Se resta a las ventas para obtener la Utilidad Bruta. Representa lo invertido en mercancía."));
+        conceptos.add(new Concepto("Gastos de Operación", "ER", "Gasto", "Sueldos, rentas y luz. Se restan para obtener la Utilidad Operativa."));
+        conceptos.add(new Concepto("Impuestos (ISR)", "ER", "Impuesto", "Es la parte de la utilidad que se paga al gobierno antes de llegar a la Utilidad Neta."));
+        
+        // ORDEN DIDÁCTICO PARA BALANCE GENERAL
+        conceptos.add(new Concepto("Bancos (Efectivo)", "BG", "Activo Circulante", "Dinero disponible hoy mismo. Va en el Activo Circulante."));
+        conceptos.add(new Concepto("Maquinaria y Equipo", "BG", "Activo No Circulante", "Bienes duraderos para producir. No se venden rápido."));
+        conceptos.add(new Concepto("Proveedores", "BG", "Pasivo Corto Plazo", "Deudas por mercancía que debemos pagar en menos de un año."));
+        conceptos.add(new Concepto("Préstamos Bancarios", "BG", "Pasivo Largo Plazo", "Obligaciones financieras que pagaremos en varios años."));
+        conceptos.add(new Concepto("Capital Social", "BG", "Capital", "El patrimonio de los dueños. A+P=C."));
+    }
+
+    private void construirInterfaz() {
+        // PANEL IZQUIERDO: Instrucciones y Teoría
+        JPanel pnlTeoria = new JPanel(new BorderLayout(10, 10));
+        pnlTeoria.setPreferredSize(new Dimension(350, 0));
+        pnlTeoria.setBackground(Color.WHITE);
+        pnlTeoria.setBorder(new CompoundBorder(new EmptyBorder(20, 20, 20, 20), new LineBorder(new Color(230, 230, 230), 1, true)));
+
+        JLabel lblTituloIns = new JLabel("INSTRUCCIONES");
+        lblTituloIns.setFont(new Font("SansSerif", Font.BOLD, 18));
+        lblTituloIns.setForeground(COLOR_ACCENTO);
+
+        txtInfo = new JTextArea("Bienvenido. Aquí aprenderás a construir estados financieros desde cero.");
+        txtInfo.setWrapStyleWord(true);
+        txtInfo.setLineWrap(true);
+        txtInfo.setEditable(false);
+        txtInfo.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        txtInfo.setBackground(Color.WHITE);
+
+        pnlTeoria.add(lblTituloIns, BorderLayout.NORTH);
+        pnlTeoria.add(new JScrollPane(txtInfo), BorderLayout.CENTER);
+
+        // PANEL CENTRAL: El Reporte en construcción
+        JPanel pnlCentro = new JPanel(new BorderLayout(20, 20));
+        pnlCentro.setBackground(COLOR_FONDO);
+
+        lblPaso = new JLabel("Nivel 1: Estado de Resultados");
+        lblPaso.setFont(new Font("SansSerif", Font.ITALIC, 14));
+        
+        lblReporte = new JLabel("<html><body style='padding:20px; color:#475569; font-family:monospace; font-size:14px;'>" +
+                                "--- DOCUMENTO VACÍO ---</body></html>");
+        lblReporte.setVerticalAlignment(SwingConstants.TOP);
+        lblReporte.setOpaque(true);
+        lblReporte.setBackground(Color.WHITE);
+        lblReporte.setBorder(new LineBorder(new Color(220, 220, 220), 1));
+
+        pnlCentro.add(lblPaso, BorderLayout.NORTH);
+        pnlCentro.add(lblReporte, BorderLayout.CENTER);
+
+        // PANEL INFERIOR: Botones de Opciones
+        panelOpciones = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15));
+        panelOpciones.setBackground(COLOR_FONDO);
+
+        add(pnlTeoria, BorderLayout.WEST);
+        add(pnlCentro, BorderLayout.CENTER);
+        add(panelOpciones, BorderLayout.SOUTH);
+    }
+
+    private void actualizarPaso() {
+        if (pasoActual >= conceptos.size()) {
+            finalizarJuego();
+            return;
+        }
+
+        Concepto c = conceptos.get(pasoActual);
+        txtInfo.setText("CONCEPTO ACTUAL:\n" + c.nombre + "\n\nINSTRUCCIÓN:\n" +
+                        "Debes decidir si esta cuenta pertenece al Estado de Resultados o al Balance General.\n\n" +
+                        "Recuerda que los estados financieros siguen un orden lógico.");
+
+        panelOpciones.removeAll();
+        crearBotonAccion("Estado de Resultados", "ER");
+        crearBotonAccion("Balance General", "BG");
+        panelOpciones.revalidate();
+        panelOpciones.repaint();
+    }
+
+    private void crearBotonAccion(String texto, String valor) {
+        JButton btn = new JButton(texto);
+        btn.setFocusPainted(false);
+        btn.setFont(new Font("SansSerif", Font.BOLD, 14));
+        btn.setBackground(Color.WHITE);
+        btn.setPreferredSize(new Dimension(200, 50));
+        btn.setBorder(new LineBorder(COLOR_ACCENTO, 2, true));
+
+        btn.addActionListener(e -> validarRespuesta(valor));
+        
+        // Efecto "Hover" (Efectos visuales)
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                btn.setBackground(COLOR_ACCENTO);
+                btn.setForeground(Color.WHITE);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                btn.setBackground(Color.WHITE);
+                btn.setForeground(Color.BLACK);
+            }
+        });
+        
+        panelOpciones.add(btn);
+    }
+
+    private void validarRespuesta(String respuesta) {
+        Concepto c = conceptos.get(pasoActual);
+        if (respuesta.equals(c.tipo)) {
+            pasoActual++;
+            actualizarVisualizacion();
+            JOptionPane.showMessageDialog(this, "¡Excelente!\n" + c.explicacion, "Dato Educativo", JOptionPane.INFORMATION_MESSAGE);
+            actualizarPaso();
+        } else {
+            JOptionPane.showMessageDialog(this, "Esa cuenta no pertenece aquí.\nIntenta analizar su naturaleza.", "Revisa la teoría", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void actualizarVisualizacion() {
+        StringBuilder sb = new StringBuilder("<html><body style='padding:20px; font-family:monospace; font-size:13px;'>");
+        sb.append("<h2 style='color:#10B981;'>REPORTE FINANCIERO</h2><hr>");
+        
+        for (int i = 0; i < pasoActual; i++) {
+            Concepto c = conceptos.get(i);
+            String prefijo = (c.tipo.equals("ER")) ? "[E.R]" : "[B.G]";
+            sb.append("<p><b>").append(prefijo).append("</b> ").append(c.nombre)
+              .append(" ----------- (").append(c.categoria).append(")</p>");
+        }
+        sb.append("</body></html>");
+        lblReporte.setText(sb.toString());
+    }
+
+    private void finalizarJuego() {
+        lblPaso.setText("¡FELICIDADES!");
+        txtInfo.setText("Has completado el entrenamiento.\n\nAhora sabes que:\n1. Resultados mide flujos (Ingresos/Egresos).\n2. Balance mide posición (A=P+C).");
+        panelOpciones.removeAll();
+        JButton btnSalir = new JButton("Finalizar Simulación");
+        btnSalir.addActionListener(e -> System.exit(0));
+        panelOpciones.add(btnSalir);
+        panelOpciones.revalidate();
+    }
+
+    public static void main(String[] args) {
+        // Ejecutar con el diseño del sistema operativo para que se vea moderno
+        try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception e) {}
+        SwingUtilities.invokeLater(() -> new SimuladorContablePro().setVisible(true));
+    }
+}
